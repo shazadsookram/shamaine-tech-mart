@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechMart TPS-MIS System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #ededeb;
+    --text: #1a1a18; --text2: #6b6b67; --text3: #9b9b96;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --success-bg: #eaf3de; --success-text: #3B6D11;
+    --info-bg: #e6f1fb; --info-text: #185FA5;
+    --warn-bg: #faeeda; --warn-text: #854F0B;
+    --danger-bg: #fcebeb; --danger-text: #A32D2D;
+    --accent: #378ADD; --accent2: #1D9E75; --accent3: #BA7517;
+    --radius: 8px; --radius-lg: 12px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Consolas', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0ede8; --text2: #a0a09a; --text3: #68685f;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --success-bg: #173404; --success-text: #C0DD97;
+      --info-bg: #042C53; --info-text: #B5D4F4;
+      --warn-bg: #412402; --warn-text: #FAC775;
+      --danger-bg: #501313; --danger-text: #F7C1C1;
+    }
+  }
+  body { font-family: var(--font); background: var(--bg2); color: var(--text); font-size: 15px; line-height: 1.5; }
+  .topbar { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .topbar-brand { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .topbar-meta { font-size: 12px; color: var(--text2); }
+  .layout { display: flex; min-height: calc(100vh - 56px); }
+  .sidebar { width: 200px; background: var(--bg); border-right: 0.5px solid var(--border); padding: 1rem 0; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 1.25rem; cursor: pointer; font-size: 14px; color: var(--text2); border-left: 3px solid transparent; transition: all 0.15s; }
+  .sidebar-item:hover { background: var(--bg2); color: var(--text); }
+  .sidebar-item.active { color: var(--text); font-weight: 500; border-left-color: var(--accent); background: var(--bg2); }
+  .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { flex: 1; padding: 1.5rem; overflow-y: auto; max-width: 1200px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 20px; font-weight: 600; margin-bottom: 0.25rem; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .card + .card, .card + .grid, .grid + .card { margin-top: 1rem; }
+  .card-title { font-size: 14px; font-weight: 500; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+  .grid-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .metric { background: var(--bg2); border-radius: var(--radius); padding: 1rem; }
+  .metric .m-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric .m-value { font-size: 22px; font-weight: 600; }
+  .metric .m-sub { font-size: 11px; color: var(--accent2); margin-top: 4px; }
+  label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 5px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; padding: 8px 10px; border: 0.5px solid var(--border2);
+    border-radius: var(--radius); background: var(--bg); color: var(--text);
+    font-family: var(--font); font-size: 14px; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
+  .form-row { margin-bottom: 12px; }
+  .btn { padding: 9px 18px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-full { width: 100%; margin-top: 10px; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; }
+  .btn-sm:hover { color: var(--text); border-color: var(--border2); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 0.5px solid var(--border2); color: var(--text2); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; background: var(--bg2); }
+  td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .table-wrap { overflow-x: auto; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .badge-success { background: var(--success-bg); color: var(--success-text); }
+  .badge-info { background: var(--info-bg); color: var(--info-text); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn-text); }
+  .badge-danger { background: var(--danger-bg); color: var(--danger-text); }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .product-card { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .product-card:hover { border-color: var(--accent); background: var(--info-bg); }
+  .product-card:active { transform: scale(0.97); }
+  .pc-code { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+  .pc-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .pc-cat { font-size: 11px; color: var(--text2); }
+  .pc-price { font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .staff-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { padding: 5px 13px; border: 0.5px solid var(--border); border-radius: 99px; font-size: 12px; cursor: pointer; color: var(--text2); transition: all 0.15s; }
+  .chip:hover { border-color: var(--border2); color: var(--text); }
+  .chip.active { background: var(--info-bg); color: var(--info-text); border-color: var(--accent); font-weight: 500; }
+  .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; gap: 8px; }
+  .cart-item:last-child { border-bottom: none; }
+  .receipt { background: var(--bg2); border-radius: var(--radius); padding: 1rem; margin-top: 10px; }
+  .receipt-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .receipt-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--border2); }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-label { width: 90px; font-size: 12px; color: var(--text2); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--bg2); border-radius: 4px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 20px; border-radius: 4px; transition: width 0.5s ease; }
+  .bar-val { width: 65px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--success-bg); color: var(--success-text); border: 0.5px solid rgba(59,109,17,0.3); padding: 10px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(8px); transition: all 0.25s; z-index: 9999; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text2); font-size: 14px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; display: flex; overflow-x: auto; padding: 0; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .sidebar-item { border-left: none; border-bottom: 3px solid transparent; padding: 12px 1rem; white-space: nowrap; }
+    .sidebar-item.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+    .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+    .main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">&#128187; TechMart TPS-MIS</div>
+  <div class="topbar-meta"><span class="live-dot"></span>Live System &bull; <span id="live-clock"></span></div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-item active" onclick="showPage('pos')">
+      <span class="sidebar-icon">&#128722;</span> Point of Sale
+    </div>
+    <div class="sidebar-item" onclick="showPage('transactions')">
+      <span class="sidebar-icon">&#128203;</span> Transactions
+    </div>
+    <div class="sidebar-item" onclick="showPage('mis')">
+      <span class="sidebar-icon">&#128202;</span> MIS Reports
+    </div>
+    <div class="sidebar-item" onclick="showPage('inventory')">
+      <span class="sidebar-icon">&#128230;</span> Inventory
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- POS PAGE -->
+    <div id="page-pos" class="page active">
+      <p class="page-title">Point of Sale</p>
+      <p class="page-sub">Select a cashier, add items to cart, and submit the transaction.</p>
+      <div class="grid2">
+        <div>
+          <div class="card">
+            <div class="card-title">Cashier on duty</div>
+            <div class="staff-chips" id="staff-chips"></div>
+            <hr class="divider">
+            <div class="card-title">Product catalogue</div>
+            <div class="product-grid" id="product-grid"></div>
+            <div class="form-row">
+              <label>Payment method</label>
+              <select id="payment-method">
+                <option>Cash</option>
+                <option>Credit Card</option>
+                <option>Debit Card</option>
+                <option>Mobile Pay</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Customer name (optional)</label>
+              <input type="text" id="customer-name" placeholder="Walk-in customer">
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:1rem">
+            <div class="card-title">Cart</div>
+            <div id="cart-items">
+              <div class="empty-state">No items &mdash; click a product to add</div>
+            </div>
+            <div id="receipt-area" style="display:none"></div>
+            <button class="btn btn-primary btn-full" onclick="submitTransaction()">&#10003; Submit Transaction</button>
+          </div>
+          <div class="grid3">
+            <div class="metric">
+              <div class="m-label">Today&rsquo;s sales</div>
+              <div class="m-value" id="metric-today">$0.00</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">Transactions</div>
+              <div class="m-value" id="metric-count">0</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">Items sold</div>
+              <div class="m-value" id="metric-items">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS PAGE -->
+    <div id="page-transactions" class="page">
+      <p class="page-title">Transaction Log</p>
+      <p class="page-sub">Complete record of all committed transactions.</p>
+      <div class="card">
+        <div class="section-header">
+          <span id="tx-count-label" style="font-size:13px;color:var(--text2)">0 transactions</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm" onclick="exportCSV()">&#8659; Export CSV</button>
+            <button class="btn-sm" onclick="clearSample()">Clear sample data</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th><th>TX ID</th><th>Cashier</th><th>Customer</th>
+                <th>Items</th><th>Payment</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tx-table-body"></tbody>
+          </table>
+        </div>
+        <div id="tx-empty" class="empty-state">No transactions yet. Complete a sale to see it here.</div>
+      </div>
+    </div>
+
+    <!-- MIS PAGE -->
+    <div id="page-mis" class="page">
+      <p class="page-title">MIS Reports</p>
+      <p class="page-sub">Management information system &mdash; performance overview for all products and staff.</p>
+
+      <div class="grid-metrics" id="mis-metrics"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Top products by revenue</div>
+          <div id="chart-products"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Staff performance (revenue)</div>
+          <div id="chart-staff"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Hourly sales activity</div>
+        <div id="chart-hourly"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Staff performance breakdown</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cashier</th><th>Transactions</th><th>Items sold</th><th>Revenue</th><th>Avg / transaction</th></tr></thead>
+            <tbody id="mis-staff-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Product performance breakdown</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>Item code</th><th>Category</th><th>Qty sold</th><th>Revenue</th><th>Avg / sale</th></tr></thead>
+            <tbody id="mis-product-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Daily revenue &mdash; Mar 17&ndash;23, 2026</div>
+        <div id="chart-daily"></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY PAGE -->
+    <div id="page-inventory" class="page">
+      <p class="page-title">Product Inventory</p>
+      <p class="page-sub">Full product catalogue with current stock and sales data.</p>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Item code</th><th>Name</th><th>Description</th><th>Category</th><th>Unit price</th><th>Stock</th><th>Units sold</th><th>Revenue</th></tr>
+            </thead>
+            <tbody id="inv-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  {code:'ITM001',name:'USB-C Hub',desc:'7-in-1 USB-C Hub',cat:'Accessories',price:49.99,stock:120},
+  {code:'ITM002',name:'Wireless Mouse',desc:'Ergonomic Wireless Mouse',cat:'Peripherals',price:29.99,stock:85},
+  {code:'ITM003',name:'Mech Keyboard',desc:'Mechanical Gaming Keyboard',cat:'Peripherals',price:89.99,stock:60},
+  {code:'ITM004',name:'Monitor Stand',desc:'Adjustable Monitor Stand',cat:'Furniture',price:39.99,stock:45},
+  {code:'ITM005',name:'Webcam 1080p',desc:'HD Webcam with Mic',cat:'Peripherals',price:69.99,stock:70},
+  {code:'ITM006',name:'HDMI Cable',desc:'2m HDMI 2.0 Cable',cat:'Cables',price:12.99,stock:200},
+  {code:'ITM007',name:'Power Bank',desc:'20000mAh Power Bank',cat:'Accessories',price:44.99,stock:90},
+  {code:'ITM008',name:'Laptop Sleeve',desc:'15" Neoprene Sleeve',cat:'Accessories',price:19.99,stock:150},
+  {code:'ITM009',name:'SSD 1TB',desc:'External SSD 1TB',cat:'Storage',price:109.99,stock:40},
+  {code:'ITM010',name:'Headset',desc:'Noise-Cancelling Headset',cat:'Audio',price:79.99,stock:55},
+  {code:'ITM011',name:'Phone Stand',desc:'Adjustable Phone Holder',cat:'Accessories',price:9.99,stock:300},
+  {code:'ITM012',name:'Ethernet Cable',desc:'5m Cat6 Cable',cat:'Cables',price:8.99,stock:250},
+];
+
+const STAFF = ['Alice M.','Brandon L.','Chantal R.','David K.','Elena S.'];
+let currentStaff = STAFF[0];
+let cart = {};
+let transactions = [];
+let txCounter = 1000;
+
+// ── SAMPLE DATA ───────────────────────────────────────────────────────────────
+function generateSampleData() {
+  // Exactly 1000 transactions spread across March 17–23 2026
+  const WEEK_DAYS = [
+    new Date(2026,2,17), new Date(2026,2,18), new Date(2026,2,19),
+    new Date(2026,2,20), new Date(2026,2,21), new Date(2026,2,22), new Date(2026,2,23)
+  ];
+  // Distribute ~143 per day (7 * 143 = 1001, so first day gets 143, rest 142/143 to hit 1000)
+  const perDay = [144,143,143,143,143,143,141];
+  const CUSTOMERS = ['Walk-in','John D.','Maria S.','Robert K.','Lisa T.','Carlos M.','Priya N.','Omar T.','Susan W.','Kevin B.'];
+  const PAYMENTS  = ['Cash','Credit Card','Debit Card','Mobile Pay'];
+
+  let seed = 42;
+  function rng() { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 4294967296; }
+
+  WEEK_DAYS.forEach((baseDate, di) => {
+    for (let t = 0; t < perDay[di]; t++) {
+      const hr  = Math.floor(rng() * 10) + 9;
+      const min = Math.floor(rng() * 60);
+      const sec = Math.floor(rng() * 60);
+      const dt  = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hr, min, sec);
+
+      const numItems = Math.floor(rng() * 4) + 1;
+      const items = [], used = new Set();
+      for (let i = 0; i < numItems; i++) {
+        let pi; do { pi = Math.floor(rng() * PRODUCTS.length); } while (used.has(pi));
+        used.add(pi);
+        const qty = Math.floor(rng() * 3) + 1;
+        const p   = PRODUCTS[pi];
+        items.push({ ...p, qty, subtotal: +(p.price * qty).toFixed(2) });
+      }
+      const subtotal = +items.reduce((s, i) => s + i.subtotal, 0).toFixed(2);
+      const tax      = +(subtotal * 0.1).toFixed(2);
+      const total    = +(subtotal + tax).toFixed(2);
+
+      transactions.push({
+        id: 'TXN-' + (txCounter++),
+        time: dt,
+        staff:    STAFF[Math.floor(rng() * STAFF.length)],
+        customer: CUSTOMERS[Math.floor(rng() * CUSTOMERS.length)],
+        items, payment: PAYMENTS[Math.floor(rng() * PAYMENTS.length)],
+        subtotal, tax, total, status: 'Completed'
+      });
+    }
+  });
+
+  transactions.sort((a, b) => b.time - a.time);
+}
+
+generateSampleData();
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('live-clock').textContent = new Date().toLocaleString();
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach((el, i) => {
+    el.classList.toggle('active', ['pos','transactions','mis','inventory'][i] === name);
+  });
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'transactions') renderTxTable();
+  if (name === 'mis') renderMIS();
+  if (name === 'inventory') renderInventory();
+}
+
+// ── PRODUCT GRID ──────────────────────────────────────────────────────────────
+function renderProductGrid() {
+  document.getElementById('product-grid').innerHTML = PRODUCTS.map(p => `
+    <div class="product-card" onclick="addToCart('${p.code}')">
+      <div class="pc-code">${p.code}</div>
+      <div class="pc-name">${p.name}</div>
+      <div class="pc-cat">${p.cat}</div>
+      <div class="pc-price">$${p.price.toFixed(2)}</div>
+    </div>`).join('');
+}
+
+// ── STAFF CHIPS ───────────────────────────────────────────────────────────────
+function renderStaffChips() {
+  document.getElementById('staff-chips').innerHTML = STAFF.map(s => `
+    <div class="chip${s === currentStaff ? ' active' : ''}" onclick="selectStaff('${s}')">${s}</div>`).join('');
+}
+function selectStaff(name) { currentStaff = name; renderStaffChips(); }
+
+// ── CART ──────────────────────────────────────────────────────────────────────
+function addToCart(code) {
+  const p = PRODUCTS.find(x => x.code === code);
+  if (!cart[code]) cart[code] = { ...p, qty: 0 };
+  cart[code].qty++;
+  renderCart();
+}
+function removeFromCart(code) {
+  if (cart[code]) { cart[code].qty--; if (cart[code].qty <= 0) delete cart[code]; }
+  renderCart();
+}
+function deleteFromCart(code) {
+  delete cart[code];
+  renderCart();
+}
+function changeQty(code, delta) {
+  if (!cart[code]) return;
+  cart[code].qty = Math.max(1, cart[code].qty + delta);
+  renderCart();
+}
+function setQty(code, val) {
+  const n = parseInt(val);
+  if (!cart[code] || isNaN(n)) return;
+  if (n <= 0) { delete cart[code]; }
+  else { cart[code].qty = Math.min(999, n); }
+  renderCart();
+}
+function renderCart() {
+  const items = Object.values(cart);
+  const cartEl = document.getElementById('cart-items');
+  const receiptEl = document.getElementById('receipt-area');
+  if (!items.length) {
+    cartEl.innerHTML = '<div class="empty-state" style="padding:1.5rem 0">No items &mdash; click a product to add</div>';
+    receiptEl.style.display = 'none'; return;
+  }
+  cartEl.innerHTML = items.map(i => `
+    <div class="cart-item">
+      <div style="flex:1">
+        <span style="font-weight:500">${i.name}</span>
+        <span style="color:var(--text2);font-size:12px"> &commat; $${i.price.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn-sm" onclick="changeQty('${i.code}',-1)">&#8722;</button>
+        <input type="number" min="1" max="999" value="${i.qty}"
+          style="width:52px;padding:4px 6px;text-align:center;font-size:13px"
+          onchange="setQty('${i.code}',this.value)"
+          oninput="setQty('${i.code}',this.value)">
+        <button class="btn-sm" onclick="changeQty('${i.code}',1)">+</button>
+        <span style="font-weight:500;min-width:52px;text-align:right">$${(i.price*i.qty).toFixed(2)}</span>
+        <button class="btn-sm" style="color:var(--danger-text)" onclick="deleteFromCart('${i.code}')">&#10005;</button>
+      </div>
+    </div>`).join('');
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = subtotal * 0.1;
+  const total = subtotal + tax;
+  receiptEl.style.display = 'block';
+  receiptEl.innerHTML = `
+    <div class="receipt">
+      <div class="receipt-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+      <div class="receipt-row"><span style="color:var(--text2)">Tax (10%)</span><span>$${tax.toFixed(2)}</span></div>
+      <div class="receipt-total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+    </div>`;
+}
+
+// ── SUBMIT TRANSACTION ────────────────────────────────────────────────────────
+function submitTransaction() {
+  const items = Object.values(cart);
+  if (!items.length) { showToast('Add at least one item first'); return; }
+  const subtotal = +items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
+  const tax = +(subtotal * 0.1).toFixed(2);
+  const total = +(subtotal + tax).toFixed(2);
+  const tx = {
+    id: 'TXN-' + (txCounter++), time: new Date(),
+    staff: currentStaff,
+    customer: document.getElementById('customer-name').value || 'Walk-in',
+    items: items.map(i => ({ ...i, subtotal: +(i.price * i.qty).toFixed(2) })),
+    payment: document.getElementById('payment-method').value,
+    subtotal, tax, total, status: 'Completed'
+  };
+  transactions.unshift(tx);
+  cart = {};
+  document.getElementById('customer-name').value = '';
+  renderCart();
+  updateLiveMetrics();
+  showToast('&#10003; ' + tx.id + ' committed successfully');
+}
+
+// ── LIVE METRICS ──────────────────────────────────────────────────────────────
+function updateLiveMetrics() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const todayTxs = transactions.filter(t => new Date(t.time) >= today);
+  document.getElementById('metric-today').textContent = '$' + todayTxs.reduce((s, t) => s + t.total, 0).toFixed(2);
+  document.getElementById('metric-count').textContent = todayTxs.length;
+  document.getElementById('metric-items').textContent = todayTxs.reduce((s, t) => s + t.items.reduce((ss, i) => ss + i.qty, 0), 0);
+}
+
+// ── TRANSACTION TABLE ─────────────────────────────────────────────────────────
+function renderTxTable() {
+  const body = document.getElementById('tx-table-body');
+  const empty = document.getElementById('tx-empty');
+  const label = document.getElementById('tx-count-label');
+  label.textContent = transactions.length.toLocaleString() + ' transactions';
+  if (!transactions.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  body.innerHTML = transactions.map(t => `
+    <tr>
+      <td style="white-space:nowrap;font-size:12px">${formatTime(t.time)}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${t.id}</td>
+      <td>${t.staff}</td>
+      <td>${t.customer}</td>
+      <td style="text-align:center">${t.items.reduce((s, i) => s + i.qty, 0)}</td>
+      <td>${t.payment}</td>
+      <td>$${t.subtotal.toFixed(2)}</td>
+      <td>$${t.tax.toFixed(2)}</td>
+      <td style="font-weight:600">$${t.total.toFixed(2)}</td>
+      <td><span class="badge badge-success">${t.status}</span></td>
+    </tr>`).join('');
+}
+
+function formatTime(d) {
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+    dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── CLEAR SAMPLE DATA ─────────────────────────────────────────────────────────
+function clearSample() {
+  if (confirm('Remove all sample transactions? Your new transactions will remain.')) {
+    transactions = transactions.filter(t => t.id.startsWith('TXN-') && parseInt(t.id.split('-')[1]) >= txCounter - transactions.length + (transactions.filter(t2 => new Date(t2.time) > new Date(Date.now() - 60000)).length));
+    transactions = [];
+    txCounter = 1000;
+    renderTxTable();
+    updateLiveMetrics();
+    showToast('Sample data cleared');
+  }
+}
+
+// ── MIS REPORTS ───────────────────────────────────────────────────────────────
+function renderMIS() {
+  const total = transactions.reduce((s, t) => s + t.total, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const todayTxs = transactions.filter(t => new Date(t.time) >= today);
+  const weekStart = new Date(2026,2,17);
+  const weekEnd   = new Date(2026,2,24);
+  const weekTxs = transactions.filter(t => new Date(t.time) >= weekStart && new Date(t.time) < weekEnd);
+  const avgTx = transactions.length ? total / transactions.length : 0;
+  const allItems = transactions.flatMap(t => t.items);
+  const totalQty = allItems.reduce((s, i) => s + i.qty, 0);
+  const topProd = getTopProduct();
+
+  document.getElementById('mis-metrics').innerHTML = [
+    { label: 'Total revenue', value: '$' + total.toFixed(2) },
+    { label: "Today's revenue", value: '$' + todayTxs.reduce((s,t)=>s+t.total,0).toFixed(2) },
+    { label: 'Week revenue (Mar 17–23)', value: '$' + weekTxs.reduce((s,t)=>s+t.total,0).toFixed(2) },
+    { label: 'Total transactions', value: transactions.length.toLocaleString() },
+    { label: 'Avg transaction', value: '$' + avgTx.toFixed(2) },
+    { label: 'Total items sold', value: totalQty.toLocaleString() },
+    { label: 'Active staff', value: STAFF.length },
+    { label: 'Products', value: PRODUCTS.length },
+  ].map(m => `<div class="metric"><div class="m-label">${m.label}</div><div class="m-value">${m.value}</div></div>`).join('');
+
+  // Product chart
+  const prodMap = {};
+  transactions.forEach(t => t.items.forEach(i => {
+    if (!prodMap[i.code]) prodMap[i.code] = { name: i.name, code: i.code, cat: i.cat, qty: 0, rev: 0, count: 0 };
+    prodMap[i.code].qty += i.qty; prodMap[i.code].rev += i.subtotal; prodMap[i.code].count++;
+  }));
+  const prods = Object.values(prodMap).sort((a, b) => b.rev - a.rev);
+  const maxRev = prods[0]?.rev || 1;
+  document.getElementById('chart-products').innerHTML = prods.slice(0, 8).map(p => `
+    <div class="bar-row">
+      <div class="bar-label" title="${p.name}">${p.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.rev/maxRev*100)}%;background:#378ADD"></div></div>
+      <div class="bar-val">$${p.rev.toFixed(0)}</div>
+    </div>`).join('');
+
+  // Staff chart
+  const staffMap = {};
+  transactions.forEach(t => {
+    if (!staffMap[t.staff]) staffMap[t.staff] = { name: t.staff, rev: 0, count: 0, items: 0 };
+    staffMap[t.staff].rev += t.total; staffMap[t.staff].count++; staffMap[t.staff].items += t.items.reduce((s,i)=>s+i.qty,0);
+  });
+  const staffArr = Object.values(staffMap).sort((a, b) => b.rev - a.rev);
+  const maxStaff = staffArr[0]?.rev || 1;
+  document.getElementById('chart-staff').innerHTML = staffArr.map(s => `
+    <div class="bar-row">
+      <div class="bar-label">${s.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.rev/maxStaff*100)}%;background:#1D9E75"></div></div>
+      <div class="bar-val">$${s.rev.toFixed(0)}</div>
+    </div>`).join('');
+  document.getElementById('mis-staff-table').innerHTML = staffArr.map(s => `
+    <tr><td>${s.name}</td><td>${s.count}</td><td>${s.items}</td><td>$${s.rev.toFixed(2)}</td><td>$${(s.rev/s.count).toFixed(2)}</td></tr>`).join('');
+
+  // Hourly chart
+  const hourMap = {};
+  for (let h = 9; h <= 19; h++) hourMap[h] = { rev: 0, count: 0 };
+  transactions.forEach(t => { const h = new Date(t.time).getHours(); if (hourMap[h]) { hourMap[h].rev += t.total; hourMap[h].count++; } });
+  const hours = Object.entries(hourMap).map(([h, v]) => ({ h: +h, ...v }));
+  const maxH = Math.max(...hours.map(h => h.rev)) || 1;
+  document.getElementById('chart-hourly').innerHTML = hours.map(h => `
+    <div class="bar-row">
+      <div class="bar-label">${h.h % 12 || 12}${h.h < 12 ? 'am' : 'pm'}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(h.rev/maxH*100)}%;background:#BA7517"></div></div>
+      <div class="bar-val">${h.count} txns</div>
+    </div>`).join('');
+
+  // Product table
+  document.getElementById('mis-product-table').innerHTML = prods.map(p => `
+    <tr>
+      <td>${p.name}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${p.code}</td>
+      <td><span class="badge badge-info">${p.cat}</span></td>
+      <td>${p.qty}</td><td>$${p.rev.toFixed(2)}</td><td>$${(p.rev/p.count).toFixed(2)}</td>
+    </tr>`).join('');
+
+  // Daily chart (Mar 17–23 2026)
+  const dayMap = {};
+  const WEEK_LABELS = ['Mar 17','Mar 18','Mar 19','Mar 20','Mar 21','Mar 22','Mar 23'];
+  WEEK_LABELS.forEach(l => dayMap[l] = { rev: 0, count: 0 });
+  transactions.forEach(t => {
+    const dt = new Date(t.time);
+    const key = dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    if (dayMap[key]) { dayMap[key].rev += t.total; dayMap[key].count++; }
+  });
+  const days = Object.entries(dayMap);
+  const maxDay = Math.max(...days.map(([,v])=>v.rev)) || 1;
+  document.getElementById('chart-daily').innerHTML = days.map(([label, v]) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.rev/maxDay*100)}%;background:#7F77DD"></div></div>
+      <div class="bar-val">$${v.rev.toFixed(0)}</div>
+    </div>`).join('');
+}
+
+function getTopProduct() {
+  const map = {};
+  transactions.forEach(t => t.items.forEach(i => { map[i.name] = (map[i.name] || 0) + i.subtotal; }));
+  return Object.entries(map).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'N/A';
+}
+
+// ── INVENTORY ─────────────────────────────────────────────────────────────────
+function renderInventory() {
+  const soldMap = {}, revMap = {};
+  transactions.forEach(t => t.items.forEach(i => {
+    soldMap[i.code] = (soldMap[i.code] || 0) + i.qty;
+    revMap[i.code] = (revMap[i.code] || 0) + i.subtotal;
+  }));
+  document.getElementById('inv-table').innerHTML = PRODUCTS.map(p => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${p.code}</td>
+      <td style="font-weight:500">${p.name}</td>
+      <td>${p.desc}</td>
+      <td><span class="badge badge-info">${p.cat}</span></td>
+      <td>$${p.price.toFixed(2)}</td>
+      <td>${p.stock}</td>
+      <td>${soldMap[p.code] || 0}</td>
+      <td>$${(revMap[p.code] || 0).toFixed(2)}</td>
+    </tr>`).join('');
+}
+
+// ── EXPORT CSV ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['TX ID','Date','Time','Cashier','Customer','Item codes','Item names','Qty','Payment','Subtotal','Tax','Total','Status']];
+  transactions.forEach(t => {
+    const dt = new Date(t.time);
+    rows.push([
+      t.id, dt.toLocaleDateString(), dt.toLocaleTimeString(),
+      t.staff, t.customer,
+      t.items.map(i=>i.code).join('; '),
+      t.items.map(i=>i.name).join('; '),
+      t.items.reduce((s,i)=>s+i.qty,0),
+      t.payment, t.subtotal.toFixed(2), t.tax.toFixed(2), t.total.toFixed(2), t.status
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'TechMart_TPS_Transactions_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('CSV exported — ' + transactions.length + ' records');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderProductGrid();
+renderStaffChips();
+updateLiveMetrics();
+</script>
+</body>
+</html>
